@@ -28,7 +28,7 @@ if openblas.found()
   pc = find_program('pkg-config', required: true)
   link_args = run_command(pc, ['--libs', 'openblas'], check: true).stdout().strip().split()
 else
-  openblas_link_args = ['-llapack', '-lblas']
+  link_args = ['-llapack', '-lblas']
 endif
 
 custom_target(
