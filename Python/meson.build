@@ -23,15 +23,12 @@ ext_suffix = run_command(
 ext_modname = '_fortran_backend'
 ext_filename = ext_modname + ext_suffix
 
-# Try OpenBLAS via pkg-config first, then fall back to -llapack -lblas
 openblas = dependency('openblas', required: false)
-
-link_args = []
 if openblas.found()
-  link_args = openblas.get_link_args()
+  pc = find_program('pkg-config', required: true)
+  link_args = run_command(pc, ['--libs', 'openblas'], check: true).stdout().strip().split()
 else
-  # Works if reference BLAS/LAPACK development packages are installed
-  link_args = ['-llapack', '-lblas']
+  openblas_link_args = ['-llapack', '-lblas']
 endif
 
 custom_target(
