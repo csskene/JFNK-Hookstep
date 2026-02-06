@@ -1,0 +1,97 @@
+!    -*- f90 -*-
+! Note: the context of this file is case sensitive.
+
+python module gmresm__user__routines 
+    interface gmresm_user_interface 
+        subroutine matvec(n,x,w)
+            integer, optional,intent(in),check(shape(x, 0) == n),depend(x) :: n=shape(x, 0)
+            double precision dimension(n),intent(in) :: x
+            double precision dimension(n),intent(inout) :: w
+        end subroutine matvec
+        subroutine psolve(n,z)
+            integer, optional,intent(in),check(shape(z, 0) == n),depend(z) :: n=shape(z, 0)
+            double precision dimension(n), intent(inout) :: z
+        end subroutine psolve
+        function dotprd(n,w,v)
+            integer, optional,intent(in),check(shape(w, 0) == n),depend(w) :: n=shape(w, 0)
+            double precision dimension(n), intent(in) :: w
+            double precision dimension(n), intent(in) :: v
+            double precision :: dotprd
+        end function dotprd
+    end interface gmresm_user_interface
+end python module gmresm__user__routines
+
+python module newtonhook__user__routines 
+    interface newtonhook_user_interface 
+        subroutine f(n,x,y) 
+            integer intent(in) :: n
+            double precision dimension(n), intent(in) :: x
+            double precision dimension(n), intent(inout) :: y
+        end subroutine f
+        subroutine df(n,x,y)
+            integer intent(in) :: n
+            double precision dimension(n), intent(in) :: x
+            double precision dimension(n), intent(inout) :: y
+        end subroutine df
+        subroutine dfp(n,x,y)
+            integer intent(in) :: n
+            double precision dimension(n), intent(in)  :: x
+            double precision dimension(n), intent(inout) :: y
+        end subroutine dfp
+        subroutine sub
+        end subroutine sub
+        function dp(n,w,v)
+            integer, optional,intent(in),check(shape(w, 0) == n),depend(w) :: n=shape(w, 0)
+            double precision dimension(n), intent(in) :: w
+            double precision dimension(n), intent(in) :: v
+            double precision :: dp
+        end function dp
+    end interface newtonhook_user_interface
+end python module newtonhook__user__routines
+
+python module _fortran_backend 
+    interface
+        subroutine gmresm(m,n,x,b,matvec,psolve,dotprd,h,v,res,del,its,info) ! GMRESm.f90
+            use gmresm__user__routines
+            integer, optional,intent(in),check(shape(h, 0) == 1 + m),depend(h) :: m=-1 + shape(h, 0)
+            integer, optional,intent(in),check(shape(x, 0) == n),depend(x) :: n=shape(x, 0)
+            double precision dimension(n),intent(inout) :: x
+            double precision dimension(n),intent(in),depend(n) :: b
+            external matvec
+            external psolve
+            external dotprd
+            double precision dimension(1 + m,m),intent(inout) :: h
+            double precision dimension(n,1 + m),intent(inout),depend(m,n) :: v
+            double precision intent(inout) :: res
+            double precision intent(inout) :: del
+            integer intent(inout) :: its
+            integer intent(inout) :: info
+        end subroutine gmresm
+        module newton ! NewtonHook.f90
+            double precision, allocatable,dimension(:) :: new_x
+            double precision, allocatable,dimension(:) :: new_fx
+            double precision :: new_tol
+            double precision :: new_del
+            integer :: new_nits
+            integer :: new_gits
+        end module newton
+        subroutine newtonhook(f,df,dfp,sub,dp,m,n,gtol,tol,del,mndl,mxdl,nits,info) ! NewtonHook.f90
+            use newton
+            use newtonhook__user__routines
+            external f
+            external df
+            external dfp
+            external sub
+            external dp
+            integer intent(in) :: m
+            integer intent(in) :: n
+            double precision intent(in) :: gtol
+            double precision intent(in) :: tol
+            double precision intent(in) :: del
+            double precision intent(in) :: mndl
+            double precision intent(in) :: mxdl
+            integer intent(in) :: nits
+            integer intent(inout) :: info
+        end subroutine newtonhook
+    end interface 
+end python module _fortran_backend

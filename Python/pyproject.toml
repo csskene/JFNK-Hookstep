@@ -1,0 +1,10 @@
+[build-system]
+requires = ["meson-python", "numpy"]
+build-backend = "mesonpy"
+
+[project]
+name = "jfnk-hookstep"
+version = "0.1.0"
+description = "JFNK-Hookstep / GMRESm Fortran solvers with Python bindings"
+requires-python = ">=3.9"
+dependencies = ["numpy"]
